@@ -1,16 +1,32 @@
--- ==========================================
--- LOAD ENTITY SPAWNER
--- ==========================================
-local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/arkanzulfadliputra-oss/Custom-Entity-Model/refs/heads/main/Custom%20Entity/Source.lua"))()
 
--- ==========================================
--- CONFIG ENTITY
--- ==========================================
 local config = {
     Entity = {
         Name = "A-69 Custom",
         Asset = "14040465404",
         HeightOffset = 0
+    },
+    Spawned = {
+        SpawnInFront = false,
+        SpawnInBehind = true
+    },
+    Movement = {
+        Speed = 200,
+        Delay = 1,
+        Reversed = false
+    },
+    Damage = {
+        Enabled = true,
+        Range = 50,
+        Amount = 100,
+        IgnoreHiding = false
+    },
+    Rebounding = {
+        Enabled = true,
+        Type = "Ambush",
+        Min = 2,
+        Max = 4,
+        Delay = 1
     },
     Lights = {
         Flicker = {
@@ -28,18 +44,6 @@ local config = {
         Range = 100,
         Values = {2, 20, 0.1, 1}
     },
-    Movement = {
-        Speed = 200,
-        Delay = 1,
-        Reversed = false
-    },
-    Rebounding = {
-        Enabled = true,
-        Type = "Ambush",
-        Min = 2,
-        Max = 4,
-        Delay = 1
-    },
     CustomSounds = {
         PlaySound = {
             SoundId = "rbxassetid://9114223282",
@@ -50,41 +54,35 @@ local config = {
             Volume = 1
         }
     },
-    Damage = {
-        Enabled = true,
-        Range = 50,
-        Amount = 100,
-        IgnoreHiding = false
-    },
     Jumpscare = {
         Enabled = true,
         Background1 = Color3.fromRGB(255, 0, 0),
         Background2 = Color3.fromRGB(150, 0, 0),
-        Face1 = "rbxassetid://10025913292",
-        Face2 = "rbxassetid://10025913292",
-        Sound1 = "rbxassetid://9114223282",
-        Sound2 = "rbxassetid://9114223282"
+        Face1 = "rbxassetid://10483855823",
+        Face2 = "rbxassetid://10483999903",
+        Sound1 = "rbxassetid://10483790459",
+        Sound2 = "rbxassetid://10483837590"
     },
     Achievement = {
         Despawned = {
             Enabled = true,
             Title = "Entity Destroyer",
-            Desc = "Berhasil menghancurkan entity kustom",
-            Reason = "Kamu berhasil mengusir entity!",
+            Desc = "Successfully destroyed custom entity",
+            Reason = "You successfully banished the entity!",
             Image = "rbxassetid://12309073114"
         },
         Death = {
             Enabled = true,
             Title = "RIP",
-            Desc = "Kamu mati oleh entity kustom",
-            Reason = "Entity terlalu kuat!",
+            Desc = "You died by custom entity",
+            Reason = "???",
             Image = "rbxassetid://12309073114"
         },
         Crucifix = {
             Enabled = true,
             Title = "Exorcist!",
-            Desc = "Berhasil menyalib entity kustom",
-            Reason = "Kekuatan salib mengalahkan entity!",
+            Desc = "Successfully crucified custom entity",
+            Reason = "Cross power defeated the entity!",
             Image = "rbxassetid://12309073114",
             CustomSound = {
                 Enabled = false,
@@ -92,15 +90,6 @@ local config = {
             }
         }
     },
-    CustomJumpscare = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Jumpscare/Source.lua"))()({
-            BackgroundColor = Color3.fromRGB(0, 0, 0),
-            BackgroundColor2 = Color3.fromRGB(150, 0, 0),
-            Face = "rbxassetid://10025913292",
-            Sound = "rbxassetid://9114223282",
-            SoundVolume = 2
-        })
-    end,
     Crucifixion = {
         Enabled = true,
         Range = 40,
@@ -110,21 +99,15 @@ local config = {
     Death = {
         Type = "Curious",
         Hints = {
-            "Kamu mati oleh A-69 Custom...",
-            "Waspadai pergerakan entity ini!"
+            "You died by A-69 Custom...",
+            "Beware of this custom entity!"
         },
         Cause = "A-69 Custom"
     }
 }
 
--- ==========================================
--- SPAWN ENTITY
--- ==========================================
 local entity = spawner.Create(config)
 
--- ==========================================
--- DEBUG CALLBACKS
--- ==========================================
 entity:SetCallback("OnSpawned", function(model)
     print("Entity spawned!")
 end)
@@ -187,16 +170,4 @@ entity:SetCallback("CrucifixionOverwrite", function()
     end
 end)
 
--- ==========================================
--- JALANKAN ENTITY
--- ==========================================
 entity:Run()
-
--- ==========================================
--- NOTIFIKASI
--- ==========================================
-Rayfield:Notify({
-    Title = "Spawned",
-    Content = config.Entity.Name .. " spawned!",
-    Duration = 5
-})
