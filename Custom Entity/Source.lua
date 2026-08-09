@@ -71,6 +71,10 @@ local CONST = {
 				Asset = "https://github.com/RegularVynixu/Utilities/raw/refs/heads/main/Doors/Entity%20Spawner/Assets/Entities/Rush.rbxm",
 				HeightOffset = 0
 			},
+			Spawned = {
+				SpawnInFront = false,
+				SpawnInBehind = true
+			},
 			Movement = {
 				Speed = 100,
 				Delay = 2,
@@ -529,7 +533,7 @@ local function DamagePlayer(entity: any)
 		
     local config = entity.Config
 
-    if config.Jumpscare.Enabled then
+    if config.Jumpscare and config.Jumpscare.Enabled then
         ShowJumpscare(config.Jumpscare)
         task.wait(0.5)
     end
@@ -540,7 +544,7 @@ local function DamagePlayer(entity: any)
     task.spawn(entity.RunCallback, entity, "OnDamagePlayer", newHealth)
 
     if newHealth == 0 then
-        if #config.Death.Hints > 0 then
+        if config.Death and #config.Death.Hints > 0 then
             PlayerGui.MainUI.Death:GetPropertyChangedSignal("Visible"):Wait()
 
             local colour;
@@ -567,12 +571,14 @@ local function DamagePlayer(entity: any)
             end
         end
 
-        local cause = config.Death.Cause
-        if typeof(cause) == "string" and cause ~= "" then
-            GameStats["Player_".. LocalPlayer.Name].Total.DeathCause.Value = cause
+        if config.Death then
+            local cause = config.Death.Cause
+            if typeof(cause) == "string" and cause ~= "" then
+                GameStats["Player_".. LocalPlayer.Name].Total.DeathCause.Value = cause
+            end
         end
 
-        if config.Achievement.Death.Enabled then
+        if config.Achievement and config.Achievement.Death and config.Achievement.Death.Enabled then
             local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
             achievementGiver({
                 Title = config.Achievement.Death.Title,
@@ -831,7 +837,7 @@ Module.Create = function(self, config: any): any?
                     table.remove(Module.ActiveEntities, i)
                 end
                 task.spawn(self.RunCallback, self, "OnDespawned")
-                if self.Config.Achievement.Despawned.Enabled then
+                if self.Config.Achievement and self.Config.Achievement.Despawned and self.Config.Achievement.Despawned.Enabled then
                     local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
                     achievementGiver({
                         Title = self.Config.Achievement.Despawned.Title,
@@ -880,10 +886,17 @@ Module.Run = function(self, entity: any, copyEntity: boolean)
     local spawnPoint: BasePart? = nil
     do
         local rooms = CurrentRooms:GetChildren()
-        if config.Movement.Reversed then
+        
+        if config.Spawned and config.Spawned.SpawnInBehind then
             spawnPoint = rooms[#rooms]:FindFirstChild("RoomExit")
-        else
+        elseif config.Spawned and config.Spawned.SpawnInFront then
             spawnPoint = rooms[1]:FindFirstChild("RoomEntrance")
+        else
+            if config.Movement.Reversed then
+                spawnPoint = rooms[#rooms]:FindFirstChild("RoomExit")
+            else
+                spawnPoint = rooms[1]:FindFirstChild("RoomEntrance")
+            end
         end
     end
     if not spawnPoint then
