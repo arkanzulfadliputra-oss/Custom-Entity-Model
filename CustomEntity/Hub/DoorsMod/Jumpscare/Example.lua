@@ -1,3 +1,5 @@
+local Loader = loadstring(game:HttpGet("https://raw.githubusercontent.com/arkanzulfadliputra-oss/Custom-Entity-Model/refs/heads/main/CustomEntity/Hub/DoorsMod/Jumpscare/Source.lua"))()
+
 local Jumpscare = Loader.Create({
     Enabled = false,
     Face1 = "",
