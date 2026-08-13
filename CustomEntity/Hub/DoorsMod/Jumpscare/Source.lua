@@ -1,25 +1,10 @@
 local Loader = {}
 
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 
-local Player = Players.LocalPlayer
-
-local function GetGui()
-    local PlayerGui = Player:WaitForChild("PlayerGui")
-
-    local Gui = PlayerGui:FindFirstChild("JumpscareGui")
-
-    if not Gui then
-        Gui = Instance.new("ScreenGui")
-        Gui.Name = "JumpscareGui"
-        Gui.IgnoreGuiInset = true
-        Gui.ResetOnSpawn = false
-        Gui.DisplayOrder = 999999
-        Gui.Parent = PlayerGui
-    end
-
-    return Gui
-end
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
 
 --------------------------------------------------
@@ -79,98 +64,15 @@ end
 
 
 --------------------------------------------------
--- FACE
---------------------------------------------------
-
-local function CreateFace(Gui, ImageId, Side)
-    if not ImageId or ImageId == "" then
-        return nil
-    end
-
-    local Image = Instance.new("ImageLabel")
-
-    Image.Name = Side .. "Head"
-    Image.BackgroundTransparency = 1
-    Image.AnchorPoint = Vector2.new(0.5, 0.5)
-    Image.Size = UDim2.fromScale(0.65, 0.65)
-
-    if Side == "Left" then
-        Image.Position = UDim2.fromScale(0.25, 0.5)
-    else
-        Image.Position = UDim2.fromScale(0.75, 0.5)
-    end
-
-    Image.Image = ImageId
-    Image.ScaleType = Enum.ScaleType.Fit
-    Image.ZIndex = 5
-    Image.Parent = Gui
-
-    return Image
-end
-
-
---------------------------------------------------
--- FAST ROTATION
---------------------------------------------------
-
-local function StartRotation(Image, Direction)
-    task.spawn(function()
-        local Rotation = 0
-
-        while Image and Image.Parent do
-            Rotation += 35 * Direction
-            Image.Rotation = Rotation
-
-            task.wait(0.03)
-        end
-    end)
-end
-
-
---------------------------------------------------
--- BACKGROUND FLASH
---------------------------------------------------
-
-local function StartBackgroundBlinking(Background, Config)
-    if not Background or not Background.Parent then
-        return
-    end
-
-    -- Setelah Sound1 selesai, langsung BG2
-    Background.BackgroundColor3 = Config.Background2
-
-    if not Config.Background.BlinkingBackground then
-        return
-    end
-
-    task.spawn(function()
-        while Background and Background.Parent do
-
-            -- BG1
-            Background.BackgroundColor3 =
-                Config.Background1
-
-            task.wait(0.02)
-
-            if not Background or not Background.Parent then
-                break
-            end
-
-            -- BG2
-            Background.BackgroundColor3 =
-                Config.Background2
-
-            task.wait(0.02)
-        end
-    end)
-end
-
-
---------------------------------------------------
 -- SOUND EFFECTS
 --------------------------------------------------
 
 local function AddSoundEffects(Sound, Config)
+    if not Config.CustomSound
+        or not Config.CustomSound.Enabled then
+        return
+    end
+
     local Effects = Config.CustomSound.Sound
 
     local Distortion = Instance.new("DistortionSoundEffect")
@@ -237,7 +139,9 @@ end
 local function CreateSound(SoundId, SoundName, Config)
     local Sound
 
-    if Config.CustomSound.Enabled
+    if Config.CustomSound
+        and Config.CustomSound.Enabled
+        and Config.CustomSound.Github
         and Config.CustomSound.Github.SoundLink ~= "" then
 
         Sound = GetGitSound(
@@ -253,15 +157,9 @@ local function CreateSound(SoundId, SoundName, Config)
         Sound.Volume = 1
     end
 
-    if not Sound then
-        return nil
-    end
-
-    if Config.CustomSound.Enabled then
+    if Sound then
         AddSoundEffects(Sound, Config)
     end
-
-    Sound.Parent = workspace
 
     return Sound
 end
@@ -271,19 +169,16 @@ end
 -- LOADER.CREATE
 --------------------------------------------------
 
-function Loader.Create(Config)
+function Loader.Create(jumpscareConfig)
 
-    Config = Config or {}
+    jumpscareConfig = jumpscareConfig or {}
 
     local Object = {}
 
-    Object.Config = Config
-
+    Object.Config = jumpscareConfig
     Object.Gui = nil
-    Object.Background = nil
     Object.Sound1 = nil
     Object.Sound2 = nil
-
     Object.Playing = false
 
 
@@ -292,6 +187,7 @@ function Loader.Create(Config)
     --------------------------------------------------
 
     function Object:Stop()
+
         self.Playing = false
 
         if self.Sound1 then
@@ -313,7 +209,8 @@ function Loader.Create(Config)
         end
 
         if self.Gui then
-            self.Gui:ClearAllChildren()
+            self.Gui:Destroy()
+            self.Gui = nil
         end
     end
 
@@ -324,7 +221,7 @@ function Loader.Create(Config)
 
     function Object:Play()
 
-        if not Config.Enabled then
+        if jumpscareConfig.Enabled == false then
             return
         end
 
@@ -332,81 +229,209 @@ function Loader.Create(Config)
 
         self.Playing = true
 
-        local Gui = GetGui()
-
-        self.Gui = Gui
 
         --------------------------------------------------
-        -- BACKGROUND 1
+        -- GUI
         --------------------------------------------------
 
+        local JumpscareGui = Instance.new("ScreenGui")
+        local ShakeFrame = Instance.new("Frame")
         local Background = Instance.new("Frame")
+        local Face = Instance.new("ImageLabel")
+
+        JumpscareGui.Name = "JumpscareGui"
+        JumpscareGui.IgnoreGuiInset = true
+        JumpscareGui.ZIndexBehavior =
+            Enum.ZIndexBehavior.Sibling
+        JumpscareGui.ResetOnSpawn = false
+        JumpscareGui.DisplayOrder = 999999
+        JumpscareGui.Parent = playerGui
+        JumpscareGui.Enabled = true
+
+
+        --------------------------------------------------
+        -- SHAKE FRAME
+        --------------------------------------------------
+
+        ShakeFrame.Name = "Shake"
+        ShakeFrame.BackgroundTransparency = 1
+        ShakeFrame.BorderSizePixel = 0
+        ShakeFrame.Size = UDim2.new(1, 0, 1, 0)
+        ShakeFrame.Position = UDim2.new(0, 0, 0, 0)
+        ShakeFrame.Parent = JumpscareGui
+
+
+        --------------------------------------------------
+        -- BACKGROUND
+        --------------------------------------------------
 
         Background.Name = "Background"
-        Background.Size = UDim2.fromScale(1, 1)
-        Background.Position = UDim2.fromScale(0, 0)
-        Background.BorderSizePixel = 0
-
-        -- Awal selalu Background1
         Background.BackgroundColor3 =
-            Config.Background1
-
-        Background.ZIndex = 1
-        Background.Parent = Gui
-
-        self.Background = Background
+            jumpscareConfig.Background1
+        Background.BorderSizePixel = 0
+        Background.Size = UDim2.new(1, 0, 1, 0)
+        Background.Position = UDim2.new(0, 0, 0, 0)
+        Background.ZIndex = 999
+        Background.Parent = ShakeFrame
 
 
         --------------------------------------------------
-        -- FACE 1
+        -- ONE FACE
         --------------------------------------------------
 
-        local Face1 = CreateFace(
-            Gui,
-            Config.Face1,
-            "Left"
-        )
+        Face.Name = "Face"
+        Face.AnchorPoint = Vector2.new(0.5, 0.5)
+        Face.BackgroundTransparency = 1
+        Face.Position = UDim2.new(0.5, 0, 0.5, 0)
+        Face.Size = UDim2.new(0, 450, 0, 450)
+        Face.Image = jumpscareConfig.Face1
+        Face.ScaleType = Enum.ScaleType.Fit
+        Face.ZIndex = 1000
+        Face.Parent = Background
 
-        if Face1 then
-            StartRotation(Face1, -1)
+
+        self.Gui = JumpscareGui
+
+
+        --------------------------------------------------
+        -- HEAD GOYANG + ROTASI
+        --------------------------------------------------
+
+        task.spawn(function()
+
+            local Direction = 1
+
+            while JumpscareGui.Parent
+                and self.Playing do
+
+                Face.Rotation = 15 * Direction
+
+                Direction = Direction * -1
+
+                task.wait(0.035)
+            end
+        end)
+
+
+        --------------------------------------------------
+        -- SCREEN SHAKE
+        --------------------------------------------------
+
+        task.spawn(function()
+
+            while JumpscareGui.Parent
+                and self.Playing do
+
+                local X = math.random(-14, 14)
+                local Y = math.random(-14, 14)
+
+                ShakeFrame.Position =
+                    UDim2.fromOffset(X, Y)
+
+                task.wait(0.025)
+            end
+        end)
+
+
+        --------------------------------------------------
+        -- FACE ZOOM
+        --------------------------------------------------
+
+        TweenService:Create(
+            Face,
+            TweenInfo.new(
+                0.7,
+                Enum.EasingStyle.Linear
+            ),
+            {
+                Size = UDim2.new(
+                    0,
+                    2450,
+                    0,
+                    1550
+                )
+            }
+        ):Play()
+
+
+        --------------------------------------------------
+        -- CHANGE TO FACE2 + BG2
+        --------------------------------------------------
+
+        local function StartSecondPhase()
+
+            if not JumpscareGui.Parent
+                or not self.Playing then
+                return
+            end
+
+
+            --------------------------------------------------
+            -- BG1 -> BG2
+            --------------------------------------------------
+
+            Background.BackgroundColor3 =
+                jumpscareConfig.Background2
+
+
+            --------------------------------------------------
+            -- FACE1 -> FACE2
+            --------------------------------------------------
+
+            Face.Image =
+                jumpscareConfig.Face2
+
+
+            --------------------------------------------------
+            -- FLASHING
+            --------------------------------------------------
+
+            if jumpscareConfig.Background
+                and jumpscareConfig.Background.BlinkingBackground then
+
+                task.spawn(function()
+
+                    while JumpscareGui.Parent
+                        and self.Playing do
+
+                        Background.BackgroundColor3 =
+                            jumpscareConfig.Background1
+
+                        task.wait(0.02)
+
+                        if not JumpscareGui.Parent then
+                            break
+                        end
+
+                        Background.BackgroundColor3 =
+                            jumpscareConfig.Background2
+
+                        task.wait(0.02)
+                    end
+                end)
+            end
         end
 
 
         --------------------------------------------------
-        -- FACE 2
-        --------------------------------------------------
-
-        local Face2 = CreateFace(
-            Gui,
-            Config.Face2,
-            "Right"
-        )
-
-        if Face2 then
-            StartRotation(Face2, 1)
-        end
-
-
-        --------------------------------------------------
-        -- SOUND 1
+        -- SOUND1
         --------------------------------------------------
 
         local Sound1 = CreateSound(
-            Config.Sound1,
-            "JumpscareSound1",
-            Config
+            jumpscareConfig.Sound1,
+            "Scare1",
+            jumpscareConfig
         )
 
         self.Sound1 = Sound1
 
 
-        --------------------------------------------------
-        -- SOUND 1 ENDED
-        --------------------------------------------------
-
         if Sound1 then
 
+            Sound1.Parent = JumpscareGui
+
             Sound1:Play()
+
 
             Sound1.Ended:Connect(function()
 
@@ -414,55 +439,45 @@ function Loader.Create(Config)
                     return
                 end
 
-                if not Background
-                    or not Background.Parent then
-                    return
-                end
-
-                -- SOUND1 SELESAI
-                -- BG1 -> BG2 -> FLASH
-
-                StartBackgroundBlinking(
-                    Background,
-                    Config
-                )
+                StartSecondPhase()
 
             end)
 
         else
 
-            -- Kalau Sound1 kosong,
-            -- langsung BG2 lalu flashing
+            -- Sound1 kosong
+            -- langsung Face2 + BG2
 
-            StartBackgroundBlinking(
-                Background,
-                Config
-            )
+            StartSecondPhase()
         end
 
 
         --------------------------------------------------
-        -- SOUND 2
+        -- SOUND2
         --------------------------------------------------
 
-        if Config.Sound2
-            and Config.Sound2 ~= "" then
+        if jumpscareConfig.Sound2
+            and jumpscareConfig.Sound2 ~= "" then
 
             task.delay(0.15, function()
 
-                if not self.Playing then
+                if not JumpscareGui.Parent
+                    or not self.Playing then
                     return
                 end
 
                 local Sound2 = CreateSound(
-                    Config.Sound2,
-                    "JumpscareSound2",
-                    Config
+                    jumpscareConfig.Sound2,
+                    "Scare2",
+                    jumpscareConfig
                 )
 
                 if Sound2 then
 
                     self.Sound2 = Sound2
+
+                    Sound2.Parent =
+                        JumpscareGui
 
                     Sound2:Play()
 
@@ -479,6 +494,24 @@ function Loader.Create(Config)
                 end
             end)
         end
+
+
+        --------------------------------------------------
+        -- DESTROY
+        --------------------------------------------------
+
+        task.delay(0.8, function()
+
+            if self.Gui == JumpscareGui then
+                self.Playing = false
+
+                if JumpscareGui then
+                    JumpscareGui:Destroy()
+                end
+
+                self.Gui = nil
+            end
+        end)
     end
 
 
