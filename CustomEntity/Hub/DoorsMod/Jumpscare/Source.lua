@@ -292,27 +292,6 @@ function Loader.Create(jumpscareConfig)
 
         self.Gui = JumpscareGui
 
-
-        --------------------------------------------------
-        -- HEAD GOYANG + ROTASI
-        --------------------------------------------------
-
-        task.spawn(function()
-
-            local Direction = 1
-
-            while JumpscareGui.Parent
-                and self.Playing do
-
-                Face.Rotation = 15 * Direction
-
-                Direction = Direction * -1
-
-                task.wait(0.035)
-            end
-        end)
-
-
         --------------------------------------------------
         -- SCREEN SHAKE
         --------------------------------------------------
